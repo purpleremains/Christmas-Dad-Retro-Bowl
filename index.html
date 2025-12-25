@@ -2892,7 +2892,15 @@ function updateGame() {
 
         players.forEach(p => {
 
-            if (p.role === 'QB' || p.role === 'OL' || p.role === 'DL') return; 
+            // Skip players who can't catch: QB, OL, DL, and LBs on blitz
+
+            if (p.role === 'QB' || p.role === 'OL' || p.role === 'DL') return;
+
+            
+
+            // Skip blitzing LBs and safeties
+
+            if (p.team === 'defense' && (p.role === 'LB' || (p.role === 'S' && p.number === 24)) && currentDefensivePlay === 'BLITZ') return;
 
 
 
