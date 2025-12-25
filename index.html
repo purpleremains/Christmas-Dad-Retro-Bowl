@@ -1458,9 +1458,69 @@ class Player {
 
                 } else if (this.role === 'RB' && currentState === STATE.RUNNING && this.runMomentum) {
 
-                     // RB auto-runs forward with good speed after handoff
+                     // RB finds holes and runs intelligently
 
-                     this.x += this.maxSpeed * 1.3;
+                     // Look for the best gap (least defenders)
+
+                     let bestY = this.y;
+
+                     let minDefenders = 999;
+
+                     const fieldWidth = FIELD_WIDTH_YARDS * YARDS_TO_PIXELS;
+
+                     
+
+                     // Check 3 lanes: current, up, down
+
+                     for (let testY of [this.y, this.y - 80, this.y + 80]) {
+
+                         if (testY < 50 || testY > fieldWidth - 50) continue;
+
+                         
+
+                         let defendersNearby = 0;
+
+                         players.forEach(p => {
+
+                             if (p.team === 'defense') {
+
+                                 const dist = Math.hypot((this.x + 60) - p.x, testY - p.y);
+
+                                 if (dist < 100) defendersNearby++;
+
+                             }
+
+                         });
+
+                         
+
+                         if (defendersNearby < minDefenders) {
+
+                             minDefenders = defendersNearby;
+
+                             bestY = testY;
+
+                         }
+
+                     }
+
+                     
+
+                     // Move towards best lane
+
+                     const dyToLane = bestY - this.y;
+
+                     if (Math.abs(dyToLane) > 10) {
+
+                         this.y += Math.sign(dyToLane) * this.maxSpeed * 0.7;
+
+                     }
+
+                     
+
+                    // Always move forward
+
+                     this.x += this.maxSpeed * 1.25;
 
                 }
 
@@ -1506,6 +1566,8 @@ class Player {
 
     block() {
 
+        // Find nearest defender to block
+
         let nearestDL = null;
 
         let minDist = 9999;
@@ -1524,27 +1586,79 @@ class Player {
 
 
 
-        if (nearestDL && minDist < 200) {
+        if (nearestDL && minDist < 250) {
 
-            let qb = players.find(p => p.role === 'QB');
+            // Check if it's a run play
 
-            if (qb) {
+            const ballCarrier = players.find(p => p.hasBall);
 
-                let tx = (nearestDL.x + qb.x) / 2;
+            const isRunPlay = ballCarrier && ballCarrier.role === 'RB';
 
-                let ty = (nearestDL.y + qb.y) / 2;
+            
 
-                let dx = tx - this.x;
+            let target = null;
 
-                let dy = ty - this.y;
+            
+
+            if (isRunPlay && currentState === STATE.RUNNING) {
+
+                // On runs: block aggressively by pushing forward into defender
+
+                target = nearestDL;
+
+                let dx = target.x - this.x;
+
+                let dy = target.y - this.y;
 
                 let dist = Math.sqrt(dx*dx + dy*dy);
 
                 if (dist > 2) {
 
-                    this.x += (dx/dist) * (this.maxSpeed * 0.8);
+                    // Push into defender
 
-                    this.y += (dy/dist) * (this.maxSpeed * 0.8);
+                    this.x += (dx/dist) * (this.maxSpeed * 1.5);
+
+                    this.y += (dy/dist) * (this.maxSpeed * 1.5);
+
+                    
+
+                    // PUSH DEFENDER BACKWARD
+
+                    if (dist < 40) {
+
+                        target.x += (dx/dist) * 2.0;
+
+                        target.y += (dy/dist) * 2.0;
+
+                    }
+
+                }
+
+            } else {
+
+                // On passes: protect QB
+
+                let qb = players.find(p => p.role === 'QB');
+
+                if (qb) {
+
+                    let tx = (nearestDL.x + qb.x) / 2;
+
+                    let ty = (nearestDL.y + qb.y) / 2;
+
+                    let dx = tx - this.x;
+
+                    let dy = ty - this.y;
+
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist > 2) {
+
+                        this.x += (dx/dist) * (this.maxSpeed * 0.8);
+
+                        this.y += (dy/dist) * (this.maxSpeed * 0.8);
+
+                    }
 
                 }
 
@@ -1674,9 +1788,27 @@ class Player {
 
                         targetY = qb.y;
 
-                        if (this.role === 'DL') moveSpeed *= 0.6;
+                        // Blitzers slower on run plays
 
-                        else moveSpeed *= 0.9; 
+                        const carrier = players.find(p => p.hasBall);
+
+                        const isRunPlay = carrier && carrier.role === 'RB';
+
+                        
+
+                        if (isRunPlay) {
+
+                            if (this.role === 'DL') moveSpeed *= 0.4;
+
+                            else moveSpeed *= 0.6;
+
+                        } else {
+
+                            if (this.role === 'DL') moveSpeed *= 0.6;
+
+                            else moveSpeed *= 0.9;
+
+                        }
 
                         this.checkBlocking(moveSpeed);
 
@@ -1730,13 +1862,31 @@ class Player {
 
             if (this.role === 'DL') {
 
+                // DL slower on run plays to allow RB to get past
+
+                const carrier = players.find(p => p.hasBall);
+
+                const isRunPlay = carrier && carrier.role === 'RB';
+
+                
+
+                if (isRunPlay) {
+
+                    moveSpeed *= 0.4; // Slower on runs
+
+                } else {
+
+                    moveSpeed *= 0.6;
+
+                }
+
+                
+
                 if (qb) {
 
                     targetX = qb.x;
 
                     targetY = qb.y;
-
-                    moveSpeed *= 0.6;
 
                 }
 
@@ -2012,11 +2162,21 @@ class Player {
 
                     let d = Math.hypot(p.x - this.x, p.y - this.y);
 
-                    if (d < PLAYER_RADIUS * 3.0) {
+                    if (d < PLAYER_RADIUS * 3.5) {
 
                         this.blockTimer++;
 
-                        if (this.blockTimer < this.shedTime) {
+                        // Better blocking on run plays
+
+                        const ballCarrier = players.find(pl => pl.hasBall);
+
+                        const isRunPlay = ballCarrier && ballCarrier.role === 'RB';
+
+                        const blockEffectiveness = isRunPlay ? this.shedTime * 2.0 : this.shedTime;
+
+                        
+
+                        if (this.blockTimer < blockEffectiveness) {
 
                             this.blocked = true;
 
@@ -2032,9 +2192,9 @@ class Player {
 
         if (this.blocked) {
 
-             this.x += (Math.random() - 0.5);
+             this.x += (Math.random() - 0.5) * 2;
 
-             this.y += (Math.random() - 0.5);
+             this.y += (Math.random() - 0.5) * 2;
 
         }
 
@@ -2846,7 +3006,7 @@ function updateGame() {
 
                     if (dist < PLAYER_RADIUS * 2.2) {
 
-                        const breakChance = carrier.role === 'QB' ? 0.15 : 0.30;
+                        const breakChance = carrier.role === 'QB' ? 0.08 : 0.18;
 
                         if (Math.random() < breakChance) {
 
