@@ -380,7 +380,7 @@
 
     </div>
 
-    <div id="controls-hint">SPACE TO SNAP • TAP 1-5 (LOB) • HOLD 1-5 (BULLET) • WASD TO RUN</div>
+    <div id="controls-hint">SPACE TO SNAP • TAP 1-5 (LOB) • HOLD 1-5 1SEC (BULLET) • WASD TO RUN</div>
 
 </div>
 
@@ -1012,7 +1012,7 @@ window.addEventListener('keyup', e => {
 
         const duration = Date.now() - input.keyPressStartTime;
 
-        const isBullet = duration >= 500; 
+        const isBullet = duration >= 1000; // Hold 1 second for bullet, tap for lob
 
         const receiverIndex = parseInt(e.key);
 
