@@ -1332,7 +1332,7 @@ class Player {
 
         this.number = (stats.number !== undefined) ? stats.number : '';
 
-        this.baseSpeed = (stats.speed || 1.0) * 1.5; // Increased from 0.85 to 1.5 for faster gameplay
+        this.baseSpeed = (stats.speed || 1.0) * 2.5; // Increased to 2.5 for much faster gameplay
 
         this.maxSpeed = this.baseSpeed;
 
@@ -2538,9 +2538,9 @@ function throwToReceiver(tag, isBullet) {
 
     // Set Ball Speed
 
-    // Lob = 6, Bullet = 8.5 (increased for faster gameplay)
+    // Lob = 9, Bullet = 13 (increased dramatically for faster gameplay)
 
-    const ballSpeed = isBullet ? 8.5 : 6;
+    const ballSpeed = isBullet ? 13 : 9;
 
 
 
@@ -2918,9 +2918,9 @@ function updateGame(dt) {
 
         } else {
 
-            ball.x += dx * 0.4 * dt; // Increased from 0.25 to 0.4 for faster snap
+            ball.x += dx * 0.6 * dt; // Increased to 0.6 for much faster snap
 
-            ball.y += dy * 0.4 * dt; // Increased from 0.25 to 0.4 for faster snap
+            ball.y += dy * 0.6 * dt; // Increased to 0.6 for much faster snap
 
             ball.z = 5;
 
