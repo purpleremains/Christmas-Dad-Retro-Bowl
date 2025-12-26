@@ -580,7 +580,11 @@ let playResult = "";
 
 let snowflakes = [];
 
-
+// Delta Time Variables for consistent speed across devices
+let lastTime = 0;
+let deltaTime = 0;
+const TARGET_FPS = 60;
+const FRAME_TIME = 1000 / TARGET_FPS; // milliseconds per frame at 60 FPS
 
 // Roster Data
 
@@ -882,11 +886,11 @@ class Snowflake {
 
     }
 
-    update() {
+    update(dt) {
 
-        this.y += this.speed;
+        this.y += this.speed * dt;
 
-        this.x += this.drift;
+        this.x += this.drift * dt;
 
         if(this.y > canvas.height) return false;
 
@@ -1328,7 +1332,9 @@ class Player {
 
         this.number = (stats.number !== undefined) ? stats.number : '';
 
-        this.maxSpeed = (stats.speed || 1.0) * 0.85;
+        this.baseSpeed = (stats.speed || 1.0) * 0.85;
+
+        this.maxSpeed = this.baseSpeed;
 
         this.color = stats.color || '#fff';
 
@@ -1364,13 +1370,19 @@ class Player {
 
 
 
-    update() {
+    update(dt) {
+
+        // Normalize speed based on delta time
+
+        this.maxSpeed = this.baseSpeed * dt;
+
+        
 
         this.blocked = false; 
 
-        if (this.missedTackleTimer > 0) this.missedTackleTimer--;
+        if (this.missedTackleTimer > 0) this.missedTackleTimer -= dt;
 
-        if (this.brokenTackleVisualTimer > 0) this.brokenTackleVisualTimer--;
+        if (this.brokenTackleVisualTimer > 0) this.brokenTackleVisualTimer -= dt;
 
 
 
@@ -2788,7 +2800,7 @@ function throwToReceiver(tag, isBullet) {
 
 
 
-function updateGame() {
+function updateGame(dt) {
 
     if (currentState === STATE.MENU || currentState === STATE.GAME_OVER) return;
 
@@ -2796,13 +2808,17 @@ function updateGame() {
 
     if (currentState !== STATE.PRE_SNAP && currentState !== STATE.SNAPPING && currentState !== STATE.PLAY_OVER) {
 
-        frameCount++;
+        frameCount += dt;
 
-        if (frameCount % 120 === 0) {
+        // Game clock ticks every 2 seconds (120 frames at 60fps)
+
+        if (frameCount >= 120) {
 
             gameTime--;
 
             updateClock();
+
+            frameCount -= 120; // Reset with remainder to keep accuracy
 
             if (gameTime <= 0) endGame("TIME EXPIRED");
 
@@ -2812,11 +2828,11 @@ function updateGame() {
 
 
 
-    // Snow logic
+    // Snow logic (spawn rate normalized to dt)
 
-    if(Math.random() < 0.3) snowflakes.push(new Snowflake());
+    if(Math.random() < 0.3 * dt) snowflakes.push(new Snowflake());
 
-    snowflakes = snowflakes.filter(s => s.update());
+    snowflakes = snowflakes.filter(s => s.update(dt));
 
 
 
@@ -2902,11 +2918,11 @@ function updateGame() {
 
         } else {
 
-            ball.x += dx * 0.25;
+            ball.x += dx * 0.25 * dt;
 
-            ball.y += dy * 0.25;
+            ball.y += dy * 0.25 * dt;
 
-            ball.z = 5; 
+            ball.z = 5;
 
         }
 
@@ -2914,27 +2930,27 @@ function updateGame() {
 
 
 
-    players.forEach(p => p.update());
+    players.forEach(p => p.update(dt));
 
 
 
     if (ball.active) {
 
-        ball.x += ball.vx;
+        ball.x += ball.vx * dt;
 
-        ball.y += ball.vy;
+        ball.y += ball.vy * dt;
 
-        ball.z += ball.vz;
+        ball.z += ball.vz * dt;
 
         
 
         if (typeof ball.gravity === 'number') {
 
-            ball.vz -= ball.gravity;
+            ball.vz -= ball.gravity * dt;
 
         } else {
 
-            ball.vz -= 0.2;
+            ball.vz -= 0.2 * dt;
 
         }
 
@@ -3010,9 +3026,9 @@ function updateGame() {
 
                         if (Math.random() < breakChance) {
 
-                            p.missedTackleTimer = 90; 
+                            p.missedTackleTimer = 90 / dt; // Normalize timer
 
-                            carrier.brokenTackleVisualTimer = 60; 
+                            carrier.brokenTackleVisualTimer = 60 / dt; // Normalize timer
 
                             const angle = Math.atan2(dy, dx);
 
@@ -4149,9 +4165,41 @@ function draw() {
 
 
 
-function loop() {
+function loop(currentTime) {
 
-    updateGame();
+    // Calculate delta time in frames (normalized to 60 FPS)
+
+    if (lastTime === 0) {
+
+        lastTime = currentTime;
+
+        requestAnimationFrame(loop);
+
+        return;
+
+    }
+
+    
+
+    const elapsed = currentTime - lastTime;
+
+    lastTime = currentTime;
+
+    
+
+    // Delta time as a multiplier (1.0 = exactly 60 FPS)
+
+    deltaTime = elapsed / FRAME_TIME;
+
+    
+
+    // Cap delta time to prevent huge jumps (e.g., when tab loses focus)
+
+    deltaTime = Math.min(deltaTime, 3.0);
+
+    
+
+    updateGame(deltaTime);
 
     draw();
 
