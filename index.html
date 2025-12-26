@@ -1561,16 +1561,12 @@ class Player {
             }
 
         }
+        }
 
 
+        // Bounds checking - removed upper limit to allow running anywhere on screen
 
-        // Bounds checking
-
-        if (this.y < 0) this.y = 0;
-
-        const fieldH = FIELD_WIDTH_YARDS * YARDS_TO_PIXELS;
-
-        if (this.y > fieldH) this.y = fieldH;
+        // No bounds checking needed - players can run anywhere
 
     }
 
@@ -2602,9 +2598,9 @@ function throwToReceiver(tag, isBullet) {
 
     // LEAD FACTOR UPDATE (Directional + Speed):
 
-    // Calculate a ratio based on the receiver's speed relative to an average (0.85)
+    // Calculate a ratio based on the receiver's speed relative to base speed (2.5)
 
-    const speedRatio = receiver.maxSpeed / 0.85; 
+    const speedRatio = receiver.baseSpeed / 2.5;
 
     
 
@@ -2648,15 +2644,15 @@ function throwToReceiver(tag, isBullet) {
 
         if (isCrossing) {
 
-            leadFactor = 0.9; // Slight lead for deep crossers
+            leadFactor = 1.4; // Increased lead for faster deep crossers
 
         } else {
 
             // Streak - Speed Bonus
 
-            let speedBonus = speedRatio * 0.35;
+            let speedBonus = speedRatio * 0.6; // Increased from 0.35
 
-            leadFactor = 1.0 + speedBonus; // Aggressive lead for streaks
+            leadFactor = 1.5 + speedBonus; // Much more aggressive lead for faster streaks
 
         }
 
@@ -2666,15 +2662,13 @@ function throwToReceiver(tag, isBullet) {
 
         if (isCrossing) {
 
-            // SLANT FIX: Increased from 0.4 to 0.85. 
+            // Increased for faster player speeds
 
-            // This throws IN FRONT of the receiver on the slant.
-
-            leadFactor = 0.85; 
+            leadFactor = 1.3; // More lead for faster slants
 
         } else {
 
-            leadFactor = 0.8; // Standard short lead
+            leadFactor = 1.2; // Increased for faster speeds
 
         }
 
@@ -2684,11 +2678,11 @@ function throwToReceiver(tag, isBullet) {
 
         if (isCrossing) {
 
-            leadFactor = 0.85; // Solid lead for digs
+            leadFactor = 1.35; // More lead for faster crossers
 
         } else {
 
-            leadFactor = 0.90 + (speedRatio * 0.05);
+            leadFactor = 1.3 + (speedRatio * 0.15); // Increased base and bonus
 
         }
 
