@@ -2543,7 +2543,7 @@ function throwToReceiver(tag, isBullet) {
 
     const bulletGravity = 0.0; 
 
-    const lobGravity = 0.05; 
+    const lobGravity = 0.15; // Increased from 0.05 for higher arc
 
     ball.gravity = isBullet ? bulletGravity : lobGravity;
 
@@ -2749,15 +2749,15 @@ function throwToReceiver(tag, isBullet) {
 
     } else {
 
-        // Reduced the added loft for short passes (was 0.5) so it doesn't rainbow as much
+        // Increased loft for much higher arc on lobs
 
-        let loft = 0.5;
+        let loft = 2.5; // Massively increased from 0.5
 
-        if (distToReceiver < shortThreshold) loft = 0.2; 
+        if (distToReceiver < shortThreshold) loft = 1.5; // Increased from 0.2
 
         
 
-        requiredVz = (requiredVz * 1.05) + loft; 
+        requiredVz = (requiredVz * 1.5) + loft; // Increased multiplier from 1.05
 
     }
 
