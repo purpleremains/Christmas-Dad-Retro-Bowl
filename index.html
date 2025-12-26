@@ -2533,9 +2533,9 @@ function throwToReceiver(tag, isBullet) {
 
     // Set Ball Speed
 
-    // Lob = 9, Bullet = 13 (increased dramatically for faster gameplay)
+    // Lob = 15, Bullet = 20 (massively increased to match player speeds)
 
-    const ballSpeed = isBullet ? 13 : 9;
+    const ballSpeed = isBullet ? 20 : 15;
 
 
 
@@ -2643,15 +2643,15 @@ function throwToReceiver(tag, isBullet) {
 
         if (isCrossing) {
 
-            leadFactor = 1.4; // Increased lead for faster deep crossers
+            leadFactor = 2.2; // Massive lead for deep crossers
 
         } else {
 
             // Streak - Speed Bonus
 
-            let speedBonus = speedRatio * 0.6; // Increased from 0.35
+            let speedBonus = speedRatio * 1.0; // Further increased
 
-            leadFactor = 1.5 + speedBonus; // Much more aggressive lead for faster streaks
+            leadFactor = 2.5 + speedBonus; // Very aggressive lead for streaks
 
         }
 
@@ -2663,11 +2663,11 @@ function throwToReceiver(tag, isBullet) {
 
             // Increased for faster player speeds
 
-            leadFactor = 1.3; // More lead for faster slants
+            leadFactor = 1.8; // Much more lead for slants
 
         } else {
 
-            leadFactor = 1.2; // Increased for faster speeds
+            leadFactor = 1.7; // Much more lead
 
         }
 
@@ -2677,11 +2677,11 @@ function throwToReceiver(tag, isBullet) {
 
         if (isCrossing) {
 
-            leadFactor = 1.35; // More lead for faster crossers
+            leadFactor = 2.0; // Much more lead for crossers
 
         } else {
 
-            leadFactor = 1.3 + (speedRatio * 0.15); // Increased base and bonus
+            leadFactor = 1.9 + (speedRatio * 0.3); // Much higher base and bonus
 
         }
 
@@ -4215,4 +4215,3 @@ loop();
 </body>
 
 </html>
-
